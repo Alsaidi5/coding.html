@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>لعبة مبرمج البالونات الصغير 💻🎈</title>
+<style>
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+-webkit-user-select: none;
+user-select: none;
+}
+
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background: linear-gradient(to bottom, #faf5ff, #edf2f7);
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-start;
+height: 100vh;
+padding: 5px 10px;
+overflow: hidden;
+}
+
+h1 {
+color: #6b46c1;
+font-size: 1.2rem;
+text-shadow: 1px 1px #e9d8fd;
+text-align: center;
+margin-top: 2px;
+margin-bottom: 4px;
+}
+
+/* اللوحة البرمجية الثابتة */
+#learning-card {
+background: #ffffff;
+border: 4px solid #805ad5;
+border-radius: 18px;
+box-shadow: 0 6px 15px rgba(128, 90, 213, 0.15);
+width: 100%;
+max-width: 330px;
+padding: 10px 12px;
+text-align: center;
+margin-bottom: 6px;
+transition: all 0.3s ease;
+}
+
+.correct-flash {
+background: #e6fffa !important;
+border-color: #319795 !important;
+transform: scale(1.03);
+}
+
+.main-concept {
+font-size: 1.1rem;
+font-weight: bold;
+color: #2b6cb0;
+background: #ebf8ff;
+padding: 2px 10px;
+border-radius: 10px;
+display: inline-block;
+margin-bottom: 5px;
+}
+
+.main-question {
+font-size: 1.4rem;
+color: #2d3748;
+font-weight: bold;
+margin: 4px 0;
+line-height: 1.3;
+}
+
+.main-hint {
+font-size: 1.1rem;
+color: #dd6b20;
+font-weight: bold;
+}
+
+#timer-badge {
+background: #319795;
+color: white;
+padding: 2px 8px;
+border-radius: 20px;
+font-size: 0.85rem;
+margin-top: 4px;
+display: inline-block;
+}
+
+/* منطقة طيران بالونات الأكواد */
+#game-area {
+position: relative;
+width: 100%;
+max-width: 330px;
+height: 42vh;
+background: rgba(255, 255, 255, 0.6);
+border: 3px dashed #805ad5;
+border-radius: 18px;
+overflow: hidden;
+margin-bottom: 8px;
+}
+
+/* تصميم البالونة الملونة للبرمجة */
+.balloon {
+position: absolute;
+width: 70px;
+height: 80px;
+border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 1rem;
+font-weight: bold;
+color: white;
+cursor: pointer;
+box-shadow: inset -4px -4px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.15);
+animation: floatUp var(--speed) linear forwards;
+text-align: center;
+padding: 4px;
+line-height: 1.2;
+}
+
+.balloon::after {
+content: "↓";
+position: absolute;
+bottom: -9px;
+color: rgba(0,0,0,0.15);
+font-size: 0.65rem;
+}
+
+@keyframes floatUp {
+0% { transform: translateY(48vh); }
+100% { transform: translateY(-90px); }
+}
+
+/* جزيئات الفرقعة الاحتفالية */
+.confetti {
+position: absolute;
+width: 8px;
+height: 8px;
+background-color: #ff0;
+border-radius: 50%;
+animation: confettiFall 1.5s ease-out forwards;
+pointer-events: none;
+z-index: 20;
+}
+
+@keyframes confettiFall {
+0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+100% { transform: translateY(200px) translateX(var(--x-move)) rotate(360deg); opacity: 0; }
+}
+
+/* زر التحكم السفلي الرئيسي */
+.btn {
+background-color: #805ad5;
+color: white;
+border: none;
+padding: 10px 30px;
+font-size: 1.1rem;
+font-weight: bold;
+border-radius: 50px;
+cursor: pointer;
+box-shadow: 0 4px #553c9a;
+margin-bottom: 15px;
+width: 80%;
+max-width: 330px;
+text-align: center;
+}
+
+.btn:active {
+box-shadow: 0 2px #553c9a;
+transform: translateY(2px);
+}
+</style>
+</head>
+<body>
+
+<h1>💻 لعبة مبرمج البالونات الصغير 🎈</h1>
+
+<div id="learning-card">
+<span class="main-concept" id="lbl-concept">المفهوم البرمجي</span>
+<div class="main-question" id="lbl-question">السؤال البرمجي يظهر هنا للطفل الذكي؟</div>
+<div class="main-hint" id="lbl-hint">المطلوب البرمجي متاح هنا 🎯</div>
+<div id="timer-badge" style="display: none;">أحسنت يا مبرمج! انتظر: <span id="countdown">5</span></div>
+</div>
+
+<div id="game-area"></div>
+
+<button class="btn" id="start-btn" onclick="startGame()">ابدأ تحدي البرمجة 🚀</button>
+
+<script>
+const gameArea = document.getElementById("game-area");
+const learningCard = document.getElementById("learning-card");
+const timerBadge = document.getElementById("timer-badge");
+const countdownSpan = document.getElementById("countdown");
+const startBtn = document.getElementById("start-btn");
+
+let levelIndex = 0;
+let spawnInterval;
+let isPaused = false;
+const colors = ['#3182ce', '#319795', '#38a169', '#dd6b20', '#e53e3e', '#b83280', '#4a5568'];
+
+// محتوى تعليم البرمجة من الصفر المخصص للأطفال بالكامل
+const codingLevels = [
+{
+concept: "الأوامر والخطوات ➡️",
+question: "الأرنب البرمجي 🐰 يريد أكل الجزر في اليمين 🥕",
+hint: "اختر الأمر البرمجي الصحيح ليتحرك له:",
+correct: "تحرك يميناً ➡️",
+wrong: "تحرك يساراً ⬅️",
+audioText: "Excellent! This is a command!"
+},
+{
+concept: "المتغيرات وصناديق الحفظ 📦",
+question: "أنشأنا صندوقاً برمجياً اسمه (العمر) ووضعنا داخله رقم 7 🎂",
+hint: "كم هي قيمة متغير العمر الآن؟",
+correct: "7",
+wrong: "10",
+audioText: "Amazing! You found the variable value!"
+},
+{
+concept: "الشروط الذكية (If Condition) 🌧️",
+question: "إذا كان (الجو ممطراً 🌧️) -> خذ مظلة ☂️، وإلا -> خذ نظارة 🕶️. الجو الآن ممطر!",
+hint: "ماذا سيختار الكمبيوتر لك؟",
+correct: "مظلة ☂️",
+wrong: "نظارة 🕶️",
+audioText: "Wow! Great job in IF condition!"
+},
+{
+concept: "التكرار الذكي (Loops) 🔁",
+question: "العصفور المغرد 🐦 لديه كود: (كرر 3 مرات 🔁 -> غرد 🎵)",
+hint: "كم مرة سيغرد العصفور؟",
+correct: "3 مرات",
+wrong: "5 مرات",
+audioText: "Correct! Loops repeat instructions!"
+},
+{
+concept: "إصلاح الأخطاء (Debugging) 🛠️",
+question: "السيارة تريد الذهاب للأمام ⬆️ ولكن الكود مكتوب: (تحرك للخلف ⬇️)",
+hint: "كيف نصلح هذا الخطأ البرمجي؟",
+correct: "تغيير للأمام ⬆️",
+wrong: "حذف السيارة ❌",
+audioText: "Fantastic! You are a master of debugging!"
+}
+];
+
+function speak(text) {
+if ('speechSynthesis' in window) {
+window.speechSynthesis.cancel();
+let utterance = new SpeechSynthesisUtterance(text);
+utterance.lang = 'en-US';
+utterance.rate = 0.8;
+window.speechSynthesis.speak(utterance);
+}
+}
+
+function updateLevelCard() {
+let current = codingLevels[levelIndex];
+document.getElementById("lbl-concept").innerText = current.concept;
+document.getElementById("lbl-question").innerText = current.question;
+document.getElementById("lbl-hint").innerText = current.hint;
+}
+
+function createConfettiExplosion() {
+for (let i = 0; i < 40; i++) {
+const confetti = document.createElement("div");
+confetti.classList.add("confetti");
+confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+confetti.style.left = Math.random() * gameArea.clientWidth + "px";
+confetti.style.top = Math.random() * (gameArea.clientHeight / 2) + "px";
+confetti.style.setProperty('--x-move', (Math.random() * 100 - 50) + "px");
+gameArea.appendChild(confetti);
+setTimeout(() => confetti.remove(), 1500);
+}
+}
+
+function createBalloon() {
+if (isPaused) return;
+
+const balloon = document.createElement("div");
+balloon.classList.add("balloon");
+
+let current = codingLevels[levelIndex];
+let isCorrect = Math.random() > 0.5;
+
+balloon.innerText = isCorrect ? current.correct : current.wrong;
+balloon.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+balloon.style.left = Math.random() * (gameArea.clientWidth - 75) + "px";
+balloon.style.setProperty('--speed', (Math.random() * 1.5 + 3.5) + "s");
+
+const triggerPop = (e) => {
+e.preventDefault();
+handlePop(balloon, balloon.innerText);
+};
+balloon.addEventListener("touchstart", triggerPop);
+balloon.addEventListener("mousedown", triggerPop);
+
+gameArea.appendChild(balloon);
+
+balloon.addEventListener('animationend', () => {
+balloon.remove();
+});
+}
+
+function handlePop(balloon, selectedText) {
+if (isPaused) return;
+
+let current = codingLevels[levelIndex];
+
+if (selectedText === current.correct) {
+isPaused = true;
+
+// تشغيل صوت التهنئة الإنجليزية لترسيخ المصطلح
+speak(current.audioText);
+
+balloon.style.transform = "scale(1.4)";
+balloon.style.opacity = "0";
+setTimeout(() => balloon.remove(), 100);
+
+gameArea.innerHTML = "";
+createConfettiExplosion();
+
+learningCard.classList.add("correct-flash");
+timerBadge.style.display = "inline-block";
+
+// مهلة مريحة مدتها 5 ثوانٍ ليتأمل الطفل الإجابة البرمجية الصحيحة
+let timeLeft = 5;
+countdownSpan.innerText = timeLeft;
+
+let countdownInterval = setInterval(() => {
+timeLeft--;
+countdownSpan.innerText = timeLeft;
+if (timeLeft <= 0) {
+clearInterval(countdownInterval);
+
+learningCard.classList.remove("correct-flash");
+timerBadge.style.display = "none";
+isPaused = false;
+
+if (levelIndex < codingLevels.length - 1) {
+levelIndex++;
+updateLevelCard();
+} else {
+// شاشة الفوز التام وإنهاء كورس البرمجة المصغر للطفل
+gameArea.innerHTML = &lt;div style='text-align:center; font-size:1.3rem; padding-top:35px; color:#6b46c1; font-weight:bold;'&gt; 🎉 كفوو يا مبرمج المستقبل العبقري! 🎉&lt;br&gt; &lt;span style="font-size:1rem; color:#4a5568;"&gt;لقد فهمت أساسيات الكمبيوتر والبرمجة بنجاح! 💻👑&lt;/span&gt; &lt;/div>;
+speak("Congratulations! You are a brilliant programmer!");
+startBtn.style.display = "inline-block";
+startBtn.innerText = "أعد التحدي البرمجي 🔄";
+}
+}
+}, 1000);
+
+} else {
+// إجابة منطقية خاطئة: اهتزاز خفيف للتنبيه
+balloon.style.transform = "translateX(6px)";
+setTimeout(() => balloon.style.transform = "none", 100);
+}
+}
+
+function startGame() {
+isPaused = false;
+levelIndex = 0;
+gameArea.innerHTML = "";
+learningCard.classList.remove("correct-flash");
+timerBadge.style.display = "none";
+startBtn.style.display = "none";
+updateLevelCard();
+clearInterval(spawnInterval);
+spawnInterval = setInterval(createBalloon, 1300);
+speak("Let's start coding challenge! Solve the puzzle.");
+}
+
+updateLevelCard();
+</script>
+
+</body>
+</html>
